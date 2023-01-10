@@ -32,4 +32,4 @@ impl_error_conversions!(
     secp256k1::Error => Error::Secp256k1Error
 );
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub(crate) type Result<T> = std::result::Result<T, Error>;
