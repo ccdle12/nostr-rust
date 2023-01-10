@@ -1,7 +1,4 @@
-use crate::{
-    error::{Error, Result},
-    util::unix_u32_now,
-};
+use crate::{error::Result, util::unix_u32_now};
 use secp256k1::{
     schnorrsig::{KeyPair, PublicKey, Signature},
     Message, Secp256k1,
@@ -75,13 +72,11 @@ impl Event {
     /// Verify the signature and id (hash) of the message against the PublicKey of
     /// the publisher of the message.
     pub fn verify_signature(&self) -> Result<()> {
-        match Secp256k1::new()
-            .schnorrsig_verify(&self.sig, &Message::from_slice(&self.id)?, &self.pubkey)
-            .is_ok()
-        {
-            true => Ok(()),
-            false => Err(Error::InvalidSignature()),
-        }
+        Ok(Secp256k1::new().schnorrsig_verify(
+            &self.sig,
+            &Message::from_slice(&self.id)?,
+            &self.pubkey,
+        )?)
     }
 }
 

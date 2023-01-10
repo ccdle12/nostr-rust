@@ -2,7 +2,6 @@ use std::{fmt, time};
 
 #[derive(Debug)]
 pub enum Error {
-    InvalidSignature(),
     SystemTimeError(std::time::SystemTimeError),
     Secp256k1Error(secp256k1::Error),
 }
@@ -10,7 +9,6 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::InvalidSignature() => write!(f, "Signature is invalid"),
             Error::SystemTimeError(ref message) => write!(f, "{}", message),
             Error::Secp256k1Error(ref message) => write!(f, "{}", message),
         }
