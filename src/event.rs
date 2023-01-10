@@ -17,7 +17,7 @@ use sha2::{Digest, Sha256};
 /// signature field).
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Event {
-    /// The sha256 hash of the serialized event data,
+    /// The sha256 hash of the serialized event data.
     pub id: [u8; 32],
 
     /// The Schnorr Public Key of the creator of the event.
@@ -49,9 +49,11 @@ impl Event {
         let secp = Secp256k1::new();
         let pubkey = PublicKey::from_keypair(&secp, keypair);
 
+        let created_at = unix_u32_now()?;
+
         // event_json is the serialied UTF-8 JSON String that will be SHA256
         // hashed to create the Event.id.
-        let created_at = unix_u32_now()?;
+        // TODO: pass tags to json! as an array of non-null strings
         let event_json = json!([0, pubkey, created_at, kind, [], content]).to_string();
 
         let id = Sha256::digest(&event_json.as_bytes());
