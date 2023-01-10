@@ -1,4 +1,4 @@
-use crate::{error::Result, util::unix_u32_now};
+use crate::{error::Result, tags::Tags, util::unix_u32_now};
 use secp256k1::{
     schnorrsig::{KeyPair, PublicKey, Signature},
     Message, Secp256k1,
@@ -30,7 +30,7 @@ pub struct Event {
     pub kind: Kind,
 
     /// A collection of tags for the event.
-    pub tags: Vec<Tag>,
+    pub tags: Tags,
 
     /// Arbitrary content for the event.
     pub content: String,
@@ -39,13 +39,29 @@ pub struct Event {
     pub sig: Signature,
 }
 
-// TODO: Create constructors for each Kind:
-// - new_set_meta_data
-// - new_text_note
-// - new_recommend_server
-// - Validate the content structure
+/// Represents the differnet variants of the kind of content the Event message
+/// contains.
+#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
+#[repr(u8)]
+pub enum Kind {
+    /// Represents a content that is a stringified JSON object describing the
+    /// user who created the event. The JSON object should contain the following
+    /// format:
+    ///
+    /// {name: String, about: String, picture: URL-String}
+    SetMetaData = 0,
+
+    /// Represents the content as a text, simply a note by the publisher with
+    /// an arbitrary message.
+    TextNote = 1,
+
+    /// Represents the content as a URL address of a relay that the publisher
+    /// wants its users to follow.
+    RecommendServer = 2,
+}
+
 impl Event {
-    pub fn new(keypair: &KeyPair, kind: Kind, tags: Vec<Tag>, content: String) -> Result<Event> {
+    pub fn new(keypair: &KeyPair, kind: Kind, tags: Tags, content: String) -> Result<Event> {
         let secp = Secp256k1::new();
         let pubkey = PublicKey::from_keypair(&secp, keypair);
 
@@ -53,8 +69,7 @@ impl Event {
 
         // event_json is the serialied UTF-8 JSON String that will be SHA256
         // hashed to create the Event.id.
-        // TODO: pass tags to json! as an array of non-null strings
-        let event_json = json!([0, pubkey, created_at, kind, [], content]).to_string();
+        let event_json = json!([0, pubkey, created_at, kind, tags, content]).to_string();
 
         let id = Sha256::digest(&event_json.as_bytes());
         let message_hash = Message::from_slice(id.as_slice())?;
@@ -82,31 +97,6 @@ impl Event {
     }
 }
 
-/// Represents the differnet variants of the kind of content the Event message
-/// contains.
-#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
-#[repr(u8)]
-pub enum Kind {
-    /// Represents a content that is a stringified JSON object describing the
-    /// user who created the event. The JSON object should contain the following
-    /// format:
-    ///
-    /// {name: String, about: String, picture: URL-String}
-    SetMetaData = 0,
-
-    /// Represents the content as a text, simply a note by the publisher with
-    /// an arbitrary message.
-    TextNote = 1,
-
-    /// Represents the content as a URL address of a relay that the publisher
-    /// wants its users to follow.
-    RecommendServer = 2,
-}
-
-// TODO:
-#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
-pub struct Tag {}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -116,7 +106,8 @@ mod test {
     fn init_event() {
         let (keypair, _) = Secp256k1::new().generate_schnorrsig_keypair(&mut thread_rng());
 
-        let event = Event::new(&keypair, Kind::SetMetaData, vec![], "some-content".into()).unwrap();
+        let tags = tags_from_vec_str!(vec!["p", "foo", "wss://foo.com"], vec!["e", "eeeee"]);
+        let event = Event::new(&keypair, Kind::SetMetaData, tags, "some-content".into()).unwrap();
         assert!(event.verify_signature().is_ok());
     }
 }
