@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, time};
 
 #[derive(Debug)]
 pub enum Error {
@@ -28,7 +28,7 @@ macro_rules! impl_error_conversions {
 }
 
 impl_error_conversions!(
-    std::time::SystemTimeError => Error::SystemTimeError,
+    time::SystemTimeError => Error::SystemTimeError,
     secp256k1::Error => Error::Secp256k1Error
 );
 
