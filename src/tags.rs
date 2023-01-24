@@ -5,9 +5,9 @@
 ///   referring to somehow
 pub type Tags = Vec<Vec<String>>;
 
-/// Helper macro to convert a Vector<&str> to the formatting for the type Tags.
+/// Helper macro to convert a collection of str slices to the formatting for the type Tags.
 #[macro_export]
-macro_rules! tags_from_vec_str {
+macro_rules! tags_from_strs {
     ($($tags:expr),*) => {
         vec![
             $($tags.iter().map(|x| x.to_string()).collect()),*
